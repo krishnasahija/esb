@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # alias
-# alias ls='ls -h'
+alias ls='ls -h'
 alias ll='ls -l'
 alias l='ls -ltr'
 alias l.='ll -d .*'
