@@ -34,21 +34,6 @@ fi
 if [[ -n ${EMMQMGR} || -n ${EMMBROKER} ]]; then
 	export EMMQMGR=${EMMQMGR}
 	export EMMBROKER=${EMMBROKER}
-# elif [[ `hostname` =~ "dv" ]]; then
-	# export EMMQMGR='RNDOQM05'
-	# export EMMBROKER='RND05BROKER1'
-# elif [[ `hostname` =~ "qa" ]]; then
-	# export EMMQMGR='RNQOQM05'
-	# export EMMBROKER='RNQ05BROKER1'
-# elif [[ `hostname` =~ "pf" ]]; then
-	# export EMMQMGR='RNVOQM05'
-	# export EMMBROKER='RNV05BROKER1'
-# elif [[ `hostname` =~ "cmictbwmb" ]]; then
-	# export EMMQMGR='RNCOQM05'
-	# export EMMBROKER='RNC05BROKER1'
-# elif [[ `hostname` =~ "cmiprbwmb" ]]; then
-	# export EMMQMGR='RNPOQM05'
-	# export EMMBROKER='RNP05BROKER1'
 else
 	export EMMQMGR='EMMQMGR_IBM.MQ'
 	export EMMBROKER='EMMBROKER_IBM.MQ'
