@@ -128,7 +128,7 @@ if [[ $UNAME = "Linux" || $UNAME =~ CYG* ]]; then
 fi
 
 # Control History Log
-export HISTIGNORE='&:[ ]*:?:??:exit:mqm:hist*:man*:type*:ls*:kill*:[lt][ws]log*:my*:psef*:lless*'
+export HISTIGNORE='&:[ ]*:?:??:exit:mqm:hist*:man*:type*:ls*:kill*:[lt][ws]log*:my*:psef*:lless*:root'
 
 # shows the path variable 
 alias path='echo -e ${PATH//:/\\n}'
@@ -176,9 +176,9 @@ alias mqbin='[ -d /opt/mqm/bin ] && PATH=/opt/mqm/bin:$PATH'
 [ -x /opt/${OPT_IBM}/mqsi/10.0/iib ] && alias ibtoolkit='. /opt/${OPT_IBM}/mqsi/10.0/iib toolkit without testnode'
 alias cdwsrr='cd /var/mqsi/common/wsrr'
 alias twlog='itail /var/mqsi/wmbflows.log'
-alias tslog='itail /var/log/user.log'
+alias tslog='itail /var/log/messages'
 alias lwlog='less +F /var/mqsi/wmbflows.log'
-alias lslog='less +F /var/log/user.log'
+alias lslog='less +F /var/log/messages'
 # QLoad & QProg
 [[ -f /var/tmp/qload$UNAME ]] && alias qload='/var/tmp/qload$UNAME -m $QM'
 [[ -f /var/tmp/q$UNAME ]] && alias qprog='/var/tmp/q$UNAME -m$QM'
@@ -268,9 +268,9 @@ function vnc_setup() {
 
 function history_del() {
 	if [ "$UNAME" == "SunOS" ]; then
-		for f in `history | grep "${2}" | tail -${1:-1} | cut -d' ' -f3 | tail -r`; do history -d $f; done
+		for f in `history | grep "${2}" | tail -${1:-1} | awk -F' ' '{print $1}' | tail -r`; do history -d $f; done
 	else
-		for f in `history | grep "${2}" | tail -${1:-1} | cut -d' ' -f3 | tac`; do history -d $f; done
+		for f in `history | grep "${2}" | tail -${1:-1} | awk -F' ' '{print $1}' | tac`; do history -d $f; done
 	fi
 }
 
