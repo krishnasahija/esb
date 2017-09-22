@@ -74,7 +74,7 @@ export BK=$EMMBROKER
 [ $USER = "ibm.mq" -o $USER = "mqm" ] && [ -n $QM -o -n $BK ] && echo -e "Environment variables set \nQM=$QM\nBK=$BK\n"
 
 #common alias
-alias ls='ls -h'
+alias ls='ls -hF'
 alias l='ls -ltr'
 alias ll='ls -l'
 alias lla='ls -la'
@@ -93,7 +93,7 @@ unalias cd 2>/dev/null
 
 # For Linux Only
 if [[ $UNAME = "Linux" || $UNAME =~ CYG* ]]; then
-	alias ls='ls -h --color=auto'
+	alias ls='ls -hF --color=auto'
 	alias rm='rm -I --preserve-root'
 	#alias top='top -cM'
 	alias du.='du -ha --max-depth 1'
@@ -177,8 +177,10 @@ alias mqbin='[ -d /opt/mqm/bin ] && PATH=/opt/mqm/bin:$PATH'
 alias cdwsrr='cd /var/mqsi/common/wsrr'
 alias twlog='itail /var/mqsi/wmbflows.log'
 alias tslog='itail /var/log/messages'
+alias txlog='itail /var/log/Xorg.0.log'
 alias lwlog='less +F /var/mqsi/wmbflows.log'
 alias lslog='less +F /var/log/messages'
+alias lxlog='less +F /var/log/Xorg.0.log'
 # QLoad & QProg
 [[ -f /var/tmp/qload$UNAME ]] && alias qload='/var/tmp/qload$UNAME -m $QM'
 [[ -f /var/tmp/q$UNAME ]] && alias qprog='/var/tmp/q$UNAME -m$QM'
