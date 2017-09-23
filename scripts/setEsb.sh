@@ -7,60 +7,40 @@
 # Krishna Kondapalli          1.0                1st Draft
 ####################################################################################
 
-THISUSER=`who am i | awk '{print $1}'`
-
-if [ "`basename $0 2>/dev/null`" = "setCmi.sh" ]; then
+if [ "`basename $0 2>/dev/null`" = "setEsb.sh" ]; then
   echo ERROR: $0 must be run in the context of this shell, please use \". $0\"
   exit 1
 fi
 
 # list all functions
 alias fun='funlist'
-alias afun='declare -F'
 
-# Text format
-if tty -s; then
-	bold=$(tput setaf 1)$(tput bold)
-	normal=$(tput sgr0)
-	underline=`tput smul`
-	nounderline=`tput rmul`
-	UL=${bold}${underline}
-	NL=${normal}${nounderline}
-fi
-
-# Set mq and mb 
-# if [[ ! `hostname` =~ ctmfqa* ]]; then
-
+# Set mq and mb
 if [[ -n ${EMMQMGR} || -n ${EMMBROKER} ]]; then
 	export EMMQMGR=${EMMQMGR}
 	export EMMBROKER=${EMMBROKER}
 else
-	export EMMQMGR='EMMQMGR_IBM.MQ'
-	export EMMBROKER='EMMBROKER_IBM.MQ'
+	export EMMQMGR='QMGR1'
+	export EMMBROKER='NODE1'
 fi
 
 # Check OS
 UNAME=`uname -s`
 if [ "$UNAME" == "Linux" ]; then
-	alias awk='/usr/bin/awk'
-	alias grep='grep --color'
 	OPT_IBM="ibm"
 elif [ "$UNAME" == "SunOS" ]; then
-	alias awk='/usr/xpg4/bin/awk'
-	alias grep='/usr/sfw/bin/ggrep --color'
 	OPT_IBM="IBM"
-	# [ -f /bin/i386 ] && TERM=sun-color && export TERM
 fi
 
 # Queue Manger Check
 dspmq &>/dev/null
 if [[ $? -eq 0 && $UNAME = "SunOS" ]]; then
-	case $(dspmq | grep -c QMNAME) in 
-		0) 
+	case $(dspmq | grep -c QMNAME) in
+		0)
 			export EMMQMGR=''
-			export EMMBROKER=''
+      export EMMBROKER=''
 		;;
-		*) 
+		*)
 			if [[ $(dspmq | grep -c "${EMMQMGR}") -eq 0 ]]; then
 				export EMMQMGR=$(dspmq | cut -d')' -f1 | cut -d'(' -f2 | tail -1)
 			fi
@@ -73,99 +53,6 @@ export QM=$EMMQMGR
 export BK=$EMMBROKER
 [ $USER = "ibm.mq" -o $USER = "mqm" ] && [ -n $QM -o -n $BK ] && echo -e "Environment variables set \nQM=$QM\nBK=$BK\n"
 
-#common alias
-alias ls='ls -hF'
-alias l='ls -ltr'
-alias ll='ls -l'
-alias lla='ls -la'
-alias l.='ls -dl .*'
-alias igrep='grep -i'
-alias psef='ps -ef | grep -v grep | igrep'
-alias psfu='ps -fu'
-alias top='top -c'
-alias du='du -h'
-alias df='df -h'
-alias dt='date +"%x %X"'
-alias ipaddr='/sbin/ifconfig -a | igrep inet'
-export LESS='-FRin'  
-# alias less='less -I'
-unalias cd 2>/dev/null
-
-# For Linux Only
-if [[ $UNAME = "Linux" || $UNAME =~ CYG* ]]; then
-	alias ls='ls -hF --color=auto'
-	alias rm='rm -I --preserve-root'
-	#alias top='top -cM'
-	alias du.='du -ha --max-depth 1'
-	alias ports='netstat -tulanp'
-	alias mountt='mount | column -t'
-	alias ping='ping -c 5'
-	alias nautilus='nautilus &>/dev/null &'
-	# remove files
-	alias rmdmp='rm -fv core.*.dmp heapdump.*.phd Snap.*.trc javacore.*.txt tmp*.tmp log*.tmp xml*.tmp element*.tmp IIB_XA_*.uds roots*.tmp selected*.tmp cat*.* jar*.tmp streams*.tmp merge*.tmp; rm -rvf xvfb-run.*'
-	alias rmbarea='[ -d ~/MessageBroker-buildarea ] && rm -rf ~/MessageBroker-buildarea'
-	# logins
-	alias root='sudo su'
-	alias mqm='sudo su - ibm.mq'
-	# accurev shortcuts
-	alias aclogin='accurev login -n $THISUSER'
-	alias ach='accurev help'
-	alias acv='accurev'
-	alias acgui='acgui &'
-	alias acupdate='acv update'
-	alias acpop='acv pop -OR . '
-	alias acpopoverlap='accurev pop -OR `accurev stat -o -fl`'
-	alias teardown='mqsistop -i $BK; sleep 10; mqsideletebroker $BK -w; endmqm -i $QM; dltmqm $QM'
-	# cd to dir without typing cd
-	shopt -s autocd 
-	shopt -s dirspell
-	# alias ipt='sudo /sbin/iptables'
-	# export HISTCONTROL=ignorespace:erasedups
-	export HISTCONTROL=erasedups
-	shopt -s histappend
-	# PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
-	# PROMPT_COMMAND="history -a; history -r; $PROMPT_COMMAND"
-fi
-
-# Control History Log
-export HISTIGNORE='&:[ ]*:?:??:exit:mqm:hist*:man*:type*:ls*:kill*:[lt][ws]log*:my*:psef*:lless*:root'
-
-# shows the path variable 
-alias path='echo -e ${PATH//:/\\n}'
-alias cpath='echo -e ${CLASSPATH//:/\\n}'
-
-# lazy alias
-alias c='clear'
-alias h='history'
-alias j='jobs -l'
-alias cd..='cd ..'
-alias ..='cd ..'
-alias 1.='cd ..'
-alias 2.='cd ../..'
-alias 3.='cd ../../..'
-alias 4.='cd ../../../..'
-alias newline='echo -e "\n"'
-
-# Custom prompt
-if [ $USER = "root" ]; then
-	prompt="# "
-else
-	prompt="$ "
-fi
-# PS1="[\u@\h:\w]$prompt"
-# PS1="\[\e]2;\w\a\]\[\e[32m\]\u@\h : \[\e[31m\]\w \[\e[0m\]\n\$prompt"
-# PS1="\[\e]0;\w\a\]\[\e[32m\]\u@\h : \$PWD [exit status-\$?]\[\e[0m\]\n\$prompt"
-PS1="\[\e]0;\w\a\]\[\e[32m\]\u@\h : \[\e[31m\]\$PWD \[\e[33m\][exit status-\$?]\[\e[0m\]\n\$prompt"
-# PS1="\[\e]0;\w\a\]\[\e[32m\]\u@\h \[\e[31m\][\$PWD] \[\e[34m\] \D{%F %T} \[\e[31m\][exit-status-\$?]\[\e[0m\]\n\$prompt"
-# PS1="\[\e]0;\w\a\]\[\e[31m\]\u@\h \[\e[32m\]\D{%T} \[\e[31m\]\$PWD \[\e[32m\][exit-status-\$?]\[\e[0m\]\n\$prompt"
-
-# vi defaults
-# alias vi='vi +"set nu | set ic"' 
-# export EXINIT="se nu ic ai aw sw=4"
-export EXINIT="set nu ic ai"
-alias svi='sudo vi' 
-alias edit='vim'
-
 #set environment
 # alias setmqe='. /opt/mqm/bin/setmqenv -s'
 alias mqexplorer='/opt/mqm/bin/MQExplorer &'
@@ -173,26 +60,13 @@ alias mqmb='echo -e "QM = $QM \nBK = $BK"'
 alias mqbin='[ -d /opt/mqm/bin ] && PATH=/opt/mqm/bin:$PATH'
 [ -x /opt/${OPT_IBM}/mqsi/7.0/bin/mqsiprofile ] && alias mb='. /opt/${OPT_IBM}/mqsi/7.0/bin/mqsiprofile'
 [ -x /opt/${OPT_IBM}/mqsi/10.0/server/bin/mqsiprofile ] && alias ib='. /opt/${OPT_IBM}/mqsi/10.0/server/bin/mqsiprofile'
-[ -x /opt/${OPT_IBM}/mqsi/10.0/iib ] && alias ibtoolkit='. /opt/${OPT_IBM}/mqsi/10.0/iib toolkit without testnode'
+[ -x /opt/${OPT_IBM}/mqsi/10.0/iib ] && alias ibtoolkit='/opt/${OPT_IBM}/mqsi/10.0/iib toolkit without testnode -data $PWD'
 alias cdwsrr='cd /var/mqsi/common/wsrr'
 alias twlog='itail /var/mqsi/wmbflows.log'
-alias tslog='itail /var/log/messages'
-alias txlog='itail /var/log/Xorg.0.log'
 alias lwlog='less +F /var/mqsi/wmbflows.log'
-alias lslog='less +F /var/log/messages'
-alias lxlog='less +F /var/log/Xorg.0.log'
 # QLoad & QProg
 [[ -f /var/tmp/qload$UNAME ]] && alias qload='/var/tmp/qload$UNAME -m $QM'
 [[ -f /var/tmp/q$UNAME ]] && alias qprog='/var/tmp/q$UNAME -m$QM'
-
-# shell behavior
-shopt -s cdspell # cd corrects any spelling mistakes
-shopt -s histappend # History appends even with multiple terminals
-
-# accurev
-function acvt() {
-	accurev $@ | column -t
-}
 
 # User functions
 
@@ -223,60 +97,6 @@ function itail() {
 	esac
 }
 
-function nocom() {
-	if [[ -f $1 ]]; then
-		# grep -v ^# "$1" | grep -v ^$ 
-		# sed '/./!d' "$1"
-		sed -e '/^[ ]*#/d' -e '/^[ ]*;/d' -e '/^$/d' "$1" 
-	else
-		isay Usage: $FUNCNAME filename - get lines without commment/spaces
-	fi
-}
-
-function ised() {
-	if [[ -n $1 ]]; then
-		read -t 24 -p "Search String: " SEARCH
-		read -t 24 -p "Replace String: " REPLACE
-		if [ "$UNAME" == "SunOS" ]; then
-			[ -n $SEARCH  ] && sed 's/'"${SEARCH}"'/'"${REPLACE}"'/g' "$1" > /tmp/tmp_sed && mv /tmp/tmp_sed "$1"
-		else
-			[ -n $SEARCH  ] && sed -i 's/'"${SEARCH}"'/'"${REPLACE}"'/g' "$1"
-		fi
-	else
-		isay "Usage: $FUNCNAME filename - sed replace"
-	fi
-}
-
-function fsize_100M() {
-	echo "Files Over 100MB: "
-	if [[ -n $1 ]]; then
-		find $1 -type f -size +100000k -exec ls -lh {} \; 2>/dev/null
-	else
-		find . -type f -size +100000k -exec ls -lh {} \; 2>/dev/null
-	fi
-	echo "Done"
-}
-
-function vnc_setup() {
-	if [[ -n $1 ]]; then
-		vncserver :$1 -geometry ${2:-1920x1080} -localhost
-		result=$?
-		[ $result -eq 29 ] && rm -rfv /tmp/.X$1-lock && rm -rfv /tmp/.X11-unix/X$1 && echo "Rerun vnc_setup"
-		[ $result -eq 2 ] && rm -rfv /tmp/.X11-unix/X$1 && echo "Rerun vnc_setup"
-	else
-		isay "Usage: $FUNCNAME port (resolution) - Setup vnc with port & optional resolution"
-	fi
-}
-
-function history_del() {
-	if [ "$UNAME" == "SunOS" ]; then
-		for f in `history | grep "${2}" | tail -${1:-1} | awk -F' ' '{print $1}' | tail -r`; do history -d $f; done
-	else
-		for f in `history | grep "${2}" | tail -${1:-1} | awk -F' ' '{print $1}' | tac`; do history -d $f; done
-	fi
-}
-
-
 # MY MY Custom function
 function my_my(){
 	# [[ -f /var/tmp/qload$UNAME ]] && alias qload='/var/tmp/qload$UNAME -m $QM'
@@ -293,64 +113,17 @@ function my_my(){
 
 	# msgmap to msgmap_backup
 	alias msgmap_to_backup='for f in `find . -iname *.msgmap `; do mv -- $f ${f}_backup; done'
-	
+
 	# for f in `echo ${!M*}`; do echo $f; done | awk '{printf("echo "$1" =  $"$1 "\n")}' | sh
-}
-
-	
-function my_loop(){
-	while true; do 
-		$@ ; 
-		printf "%.s*" {1..100}
-		echo "";
-		sleep 1; 
-	done
-}
-
-function kksshkey() {
-SSH_MYKEY="ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAq1R0m34HI8IOx1QQwOOj8qmxH2SSCMvYDBjLwVEK9hubI/V8Th2nNSuYPU2C8qodpnFY5tfbYk6ytv9KZV9ogpFdc/aqoM6IAVtSp0GbRdFPugrbkfZekAK1nOP7dHbXW7dpFMoZwcf5g0tQjvGJNygjpiaIRm8RWQHaXL+zAH00HJ7+vY3/7donodgEwpWG2RYnLWM13HCayvxHYxRtVxpGPCPzxbtaxNB4UJqgDyIZKRlMmQQNQMVrX9HuDxnyYKGC0FSIrHfaWpOnB1QlotG9B52VDR8n4oV/k+GqoaY8X+7YWaF79n19TaHxBmPByAHcNGvJfE5GjMsw4FARFw== krishna.kondapalli@omgeo.com"
-	if [[ ! -d ~/.ssh ]]; then
-		mkdir ~/.ssh
-		chmod 0700 ~/.ssh
-	fi
-	AUTH_KEYS=$(ls -d1 ~/.ssh/authorized_keys*)
-	echo " AUTH_KEYS FILE - $AUTH_KEYS "
-	if [[ -n $AUTH_KEYS ]]; then
-		if [[ $(grep -c "${SSH_MYKEY}" $AUTH_KEYS) -eq 0 ]]; then
-			echo "$SSH_MYKEY" | cat >> $AUTH_KEYS
-			echo "SSH PUB KEY is copied"
-		else
-			echo "SSH PUB KEY exists"
-		fi
-	else
-		echo "$SSH_MYKEY" | cat >> ~/.ssh/authorized_keys2
-		chmod 600 ~/.ssh/authorized_keys2
-		echo "SSH PUB KEY is copied"
-	fi
-}
-
-function bashrc_update() {
-	sed '/setkk/d' ~/.bashrc > /tmp/tmp_sed && mv /tmp/tmp_sed ~/.bashrc
-	sed '/setCmi/d' ~/.bashrc > /tmp/tmp_sed && mv /tmp/tmp_sed ~/.bashrc
-	# SCRIPT=`echo $BASH_SOURCE`
-	SCRIPT="/var/tmp/setCmi.sh"
-	# ENV_FILE="[[ -n \`logname\` ]] && [[ \`logname\` = $MYUSER ]] && [[ -x /tmp/setCmi.sh ]] && . /tmp/setCmi.sh"
-	ENV_FILE="[[ -x /var/tmp/setCmi.sh ]] && . /var/tmp/setCmi.sh"
-	if [[ $(grep -c "${SCRIPT}" ~/.bashrc) -eq 0 ]]; then
-		echo -e "${ENV_FILE}" | cat >> ~/.bashrc
-		echo "setCmi.sh Copied to .bashrc"
-	else
-		echo "setCmi.sh Already in .bashrc"
-	fi
 }
 
 # MB stuff
 function mb_ls() {
-	
-	case $# in 
+
+	case $# in
 		0) irun mqsilist $EMMBROKER
 		;;
-		1) 	if [[ "$1" =~ ^[0-9]{1}$ ]]; then 
+		1) 	if [[ "$1" =~ ^[0-9]{1}$ ]]; then
 				irun mqsilist $EMMBROKER -d $1
 			else
 				irun mqsilist $EMMBROKER -e $1
@@ -416,9 +189,9 @@ function mb_getdbparms() {
 	else
 		WORKPATH=$(mqsireportbroker $BK | grep "Shared Work Path =" | cut -d"'" -f2)
 	fi
-	
+
 	[ ! -d $WORKPATH/registry/$EMMBROKER/CurrentVersion ] && echo "Can't find $WORKPATH/registry/$EMMBROKER/CurrentVersion" && return 1
-	
+
 	ls -1 $WORKPATH/registry/$EMMBROKER/CurrentVersion/DSN
 	[[ $? -eq 0 ]] && read -p 'Input DSN Property name that you need to get: ' -t 24 PROP
 	if [[ -n $PROP ]]; then
@@ -452,12 +225,12 @@ function mb_deploy() {
 function mb_buildver(){
 	echo $bold"Build Versions of running EG's "$normal
 	mb_running_egs
-	for EG in `mb_running_egs`; do 
+	for EG in `mb_running_egs`; do
 		linebreaker; echo $EG
 		eg_buildver $EG
 		linebreaker
 	done
-	
+
 	if [[ $(mb_ls | grep -c BIP1287I) -ne 0 ]]; then
 		linebreaker; echo -e "Stopped EG's :"
 		mb_ls | grep BIP1287I | cut -d "'" -f2
@@ -467,14 +240,14 @@ function mb_buildver(){
 
 function mb_report_prop() {
 	echo -en 'Report which MB Property: \nBrokerRegistry \nSecurityCache \nHTTPListener \nSecurityCache \nWebAdmin \nMQTT \nAgentJVM\nName: ' && read -t 24 PROP
-	case $PROP in 
+	case $PROP in
 		BrokerRegistry) irun mqsireportproperties $EMMBROKER -o $PROP -r
 		;;
 		SecurityCache) irun mqsireportproperties $EMMBROKER -o $PROP -r
 		;;
 		HTTPListener) irun mqsireportproperties $EMMBROKER -b httplistener -o AllReportableEntityNames -r
 		;;
-		SecurityCache) irun mqsireportproperties $EMMBROKER -b securitycache -o AllReportableEntityNames -r		
+		SecurityCache) irun mqsireportproperties $EMMBROKER -b securitycache -o AllReportableEntityNames -r
 		;;
 		WebAdmin) irun mqsireportproperties $EMMBROKER -b webadmin -o AllReportableEntityNames -r
 		;;
@@ -583,7 +356,7 @@ function eg_trace_off() {
 		# if [[ ${#DISPLAY} -ne 0 ]];then gedit trace.txt; else less trace.txt; fi
 		if [[ ${#DISPLAY} -eq 0 ]]; then #checks length of $DISPLAY
 			less ${2:-u}trace.txt
-		else 
+		else
 			gedit ${2:-u}trace.txt &
 		fi
 	else
@@ -595,7 +368,7 @@ function rtrace() {
 	[ $# -eq 1 ] && irun mqsiformatlog -i ${1} -o ${2:-u}trace.txt
 	if [[ ${#DISPLAY} -eq 0 ]]; then #checks length of $DISPLAY
 		less ${2:-u}trace.txt
-	else 
+	else
 		gedit ${2:-u}trace.txt &
 	fi
 }
@@ -612,7 +385,7 @@ function eg_restart() {
 
 function eg_start() {
 	if [[ -n $1 ]]; then
-		irun mqsistartmsgflow $EMMBROKER -w 600 -e $@ 
+		irun mqsistartmsgflow $EMMBROKER -w 600 -e $@
 	else
 		isay "Usage: $FUNCNAME EG"
 	fi
@@ -678,7 +451,7 @@ function setmb() {
 
 function mq_q() {
 	if [[ -n $1 ]]; then
-		isay  "dis q('$1')" 
+		isay  "dis q('$1')"
 		echo "dis q('$1')" | runmqsc $EMMQMGR
 	else
 		isay "Usage: $FUNCNAME 'QName'"
@@ -724,13 +497,13 @@ function mq_qstat() {
 function mq_qclear() {
 	echo "Use $FUNCNAME with caution as it clears all msgs in Queue"
 	for f in `echo "dis q(*) where ( curdepth gt 0 )" | runmqsc $EMMQMGR | grep -i 'queue(' | grep -iv 'queue(system' | cut -d'(' -f 2 | cut -d')' -f1`;
-	do 
+	do
 		[[ ! $1 = "all" ]] && read -p "Clear Q - $f > y/n : " -n 1 -r && echo && [[ ! $REPLY =~ ^[Yy]$ ]] && continue
 		if [ $(alias | grep -c "qload") -eq 0 ]; then
-			isay "Purging Q - ${f}" 
-			echo "clear ql($f)" | runmqsc -e $EMMQMGR 
+			isay "Purging Q - ${f}"
+			echo "clear ql($f)" | runmqsc -e $EMMQMGR
 		else
-			isay "Purging Q - ${f}" 
+			isay "Purging Q - ${f}"
 			qload -pI $f
 		fi
 	done
@@ -786,7 +559,7 @@ function mq_chl_reset() {
 
 function mq_chl_retry_start() {
 	if [[ -n $1 ]]; then
-		mq_chl_stop  $1 nostatus ; sleep 10; 
+		mq_chl_stop  $1 nostatus ; sleep 10;
 		mq_chl_reset $1
 		mq_chl_start $1
 	else
@@ -795,8 +568,8 @@ function mq_chl_retry_start() {
 }
 
 function mq_chl_retry_start_all() {
-	for f in `echo 'dis chs(*) where( status eq retrying )'| runmqsc $EMMQMGR | grep CHANNEL | cut -d '(' -f2 | cut -d ')' -f1`; 
-	do 
+	for f in `echo 'dis chs(*) where( status eq retrying )'| runmqsc $EMMQMGR | grep CHANNEL | cut -d '(' -f2 | cut -d ')' -f1`;
+	do
 		mq_chl_retry_start $f
 	done
 }
@@ -804,14 +577,14 @@ function mq_chl_retry_start_all() {
 # MQ Sample Scripts
 function mq_put() {
 	if [[ -n $1 ]]; then
-		irun /opt/mqm/samp/bin/amqsput $1 $EMMQMGR 
+		irun /opt/mqm/samp/bin/amqsput $1 $EMMQMGR
 	else
 		isay "Usage: $FUNCNAME 'QName'"
 	fi
 }
-function mq_get() { 
+function mq_get() {
 	if [[ -n $1 ]]; then
-		irun /opt/mqm/samp/bin/amqsget $1 $EMMQMGR 
+		irun /opt/mqm/samp/bin/amqsget $1 $EMMQMGR
 	else
 		isay "Usage: $FUNCNAME 'QName'"
 	fi
@@ -850,7 +623,7 @@ function prjbuild(){
 		fi
 	else
 		isay "Usage: $FUNCNAME 'Project' (optional target)"
-		[ -n ${EMM_ROOT_DIR} ] && cd ${EMM_ROOT_DIR} && find . -iname 'project-build.xml' | cut -d '/' -f3 | sort 
+		[ -n ${EMM_ROOT_DIR} ] && cd ${EMM_ROOT_DIR} && find . -iname 'project-build.xml' | cut -d '/' -f3 | sort
 	fi
 }
 
@@ -860,23 +633,23 @@ function funlist() {
 ${bold}FUNCTIONName           -    DESCRIPTION                             -    USAGE${normal}
 *************************************************************************************************************************
 ${bold}MessageBroker${normal}
-mbstart                -    MB Start                                -    FunctionName 
+mbstart                -    MB Start                                -    FunctionName
 mbstop                 -    MB Stop                                 -    FunctionName (-i|-q)
 mb_restart             -    MB Restart                              -    FunctionName (-i)
 mb_ls                  -    MB MQSIList                             -    FunctionName (EG|EG DetailLevel)
-mb_cvp                 -    MB mqsicvp to check Broker              -    FunctionName 
-mb_running_egs         -    MB List Running EG's                    -    FunctionName 
+mb_cvp                 -    MB mqsicvp to check Broker              -    FunctionName
+mb_running_egs         -    MB List Running EG's                    -    FunctionName
 mb_deploy              -    MB Deploy Bar                           -    FunctionName EG BAR (-m)
 mb_jdbc                -    MB Display JDBC                         -    FunctionName INTERACTIVE
 mb_toggle_mqtt         -    MB Toogle MQTT Server                   -    FunctionName INTERACTIVE
 mb_report_prop         -    MB Report Properties                    -    FunctionName INTERACTIVE
 mb_setdbparms          -    MB SetDB parms                          -    FunctionName INTERACTIVE
 mb_getdbparms          -    MB GetDB parms                          -    FunctionName INTERACTIVE
-mb_mqservice           -    MB Set as MQ Service                    -    FunctionName 
+mb_mqservice           -    MB Set as MQ Service                    -    FunctionName
 mb_buildver            -    MB Running EG's versions                -    FunctionName
 prjbuild               -    CMI Project build                       -    FunctionName ProjectName (target)
 *************************************************************************************************************************
-${bold}MessageBroker-EG${normal}                                    
+${bold}MessageBroker-EG${normal}
 eg_buildver            -    EG MsgFlow Version                      -    FunctionName EG
 eg_report_prop         -    EG MQSI Report Properties               -    FunctionName (a) INTERACTIVE
 eg_change_prop         -    EG Change Properties                    -    FunctionName (a) INTERACTIVE
@@ -887,52 +660,40 @@ eg_start               -    EG Start                                -    Functio
 eg_stop                -    EG Stop                                 -    FunctionName EG
 eg_start_mflow         -    EG MessageFlow Start                    -    FunctionName EG MSGFLOW
 eg_stop_mflow          -    EG MessageFlow Stop                     -    FunctionName EG MSGFLOW
-eg_start_all_mflow     -    EG MessageFlow Start All                -    FunctionName EG 
-eg_stop_all_mflow      -    EG MessageFlow Stop All                 -    FunctionName EG 
+eg_start_all_mflow     -    EG MessageFlow Start All                -    FunctionName EG
+eg_stop_all_mflow      -    EG MessageFlow Stop All                 -    FunctionName EG
 eg_trace_on            -    EG Start Trace                          -    FunctionName EG (t)
 eg_trace_off           -    EG Stop Trace                           -    FunctionName EG (t)
 *************************************************************************************************************************
-${bold}MQ-Queue${normal}                                            
+${bold}MQ-Queue${normal}
 rmq                    -    RUN MQ COMMAND                          -    FunctionName 'CMD'
 mq_q                   -    MQ Display Q's                          -    FunctionName 'QNAME'
 mq_clusterq            -    MQ Cluster Q's                          -    FunctionName 'QNAME'
 mq_qstat               -    MQ Queue Stats                          -    FunctionName 'QNAME'
 mq_qpid                -    MQ ProcessId running on Q               -    FunctionName 'QNAME'
-mq_curdepth            -    MQ List of all Q's with msgs            -    FunctionName 
-mq_qclear              -    MQ Clears all Q's with msgs             -    FunctionName 
+mq_curdepth            -    MQ List of all Q's with msgs            -    FunctionName
+mq_qclear              -    MQ Clears all Q's with msgs             -    FunctionName
 mq_bcg                 -    MQ Browse Msgs in Q                     -    FunctionName 'QNAME'
 mq_put                 -    MQ Put Msgs in Q                        -    FunctionName 'QNAME'
 mq_get                 -    MQ Get Msgs from Q                      -    FunctionName 'QNAME'
 qbrowse                -    qload browse msgs from Q                -    FunctionName 'QNAME'
-${bold}MQ-Channel${normal}                                          
+${bold}MQ-Channel${normal}
 mq_chl                 -    MQ channel list                         -    FunctionName 'ChlName'
 mq_chstat              -    MQ channel status                       -    FunctionName 'ChlName'
 mq_chl_start           -    MQ channel start                        -    FunctionName 'ChlName'
 mq_chl_reset           -    MQ channel reset                        -    FunctionName 'ChlName'
 mq_chl_stop            -    MQ channel stop                         -    FunctionName 'ChlName'
 mq_chl_retry_start     -    MQ start retrying channel               -    FunctionName 'ChlName'
-mq_chl_retry_start_all -    MQ start all retrying channels          -    FunctionName 
+mq_chl_retry_start_all -    MQ start all retrying channels          -    FunctionName
 *************************************************************************************************************************
-${bold}Utils${normal}                                                
+${bold}Utils${normal}
 setmq                  -    MQ Change QMGR Name for script          -    FunctionName 'QMGR'
 setmb                  -    MQ Change BROKER Name for script        -    FunctionName 'BROKER'
-lless                  -    Less last 'n' number files              -    FunctionName (number)
-nocom                  -    No Comment Grep                         -    FunctionName filename
-ised                   -    SED Inplace replace                     -    FunctionName filename
-itail                  -    Tails given file                        -    FunctionName filename (lines) (search string)
-fsize_100M             -    Lists Files over 100MB                  -    FunctionName (path)
-vnc_setup              -    VNC Setup with port                     -    FunctionName TERM(1-8) (resolution)
-twlog                  -    Tails wmblog file                       -    FunctionName (lines) (search string)
-tslog                  -    Tails syslog file                       -    FunctionName (lines) (search string)
-lwlog                  -    Less wmblog file                        -    FunctionName
-lslog                  -    Less syslog file                        -    FunctionName
 *************************************************************************************************************************
-${bold}setmq - Change QMGR Name 
+${bold}setmq - Change QMGR Name
 setmb - Change BROKER Name
-lwlog - Less WMB Log
-lslog - Less SYS Log${normal}
 ${UL}Notes:${NL}
-() - Optional 
+() - Optional
 declare -f FunctionName - For function lookup
 *************************************************************************************************************************
 EOF
